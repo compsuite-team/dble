@@ -57,7 +57,7 @@ public class RWSplitNonBlockingSession extends Session {
     @Override
     public void stopFlowControl(int currentWritingSize) {
 
-        synchronized (this) {
+        synchronized (rwSplitService.getFlowLock()) {
             if (rwSplitService.isFlowControlled()) {
                 LOGGER.info("Session stop flow control " + this.getSource());
                 rwSplitService.getConnection().setFrontWriteFlowControlled(false);
@@ -82,18 +82,21 @@ public class RWSplitNonBlockingSession extends Session {
 
     @Override
     public void startFlowControl(int currentWritingSize) {
-        synchronized (this) {
+        synchronized (rwSplitService.getFlowLock()) {
             if (!rwSplitService.isFlowControlled()) {
                 LOGGER.info("Session start flow control " + this.getSource());
             }
             rwSplitService.getConnection().setFrontWriteFlowControlled(true);
-            this.conn.disableRead();
+            if (this.conn != null) {
+                this.conn.disableRead();
+            }
+
         }
     }
 
     @Override
     public void releaseConnectionFromFlowControlled(BackendConnection con) {
-        synchronized (this) {
+        synchronized (rwSplitService.getFlowLock()) {
             con.getSocketWR().enableRead();
             rwSplitService.getConnection().setFrontWriteFlowControlled(false);
         }

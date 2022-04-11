@@ -27,10 +27,15 @@ public abstract class BusinessService<T extends UserConfig> extends FrontendServ
     protected volatile boolean txChainBegin;
     protected volatile boolean txStarted;
     protected final CommandCount commands;
+    private Object flowLock = new Object();
 
     public BusinessService(AbstractConnection connection, AuthResultInfo info) {
         super(connection, info);
         this.commands = connection.getProcessor().getCommands();
+    }
+
+    public Object getFlowLock() {
+        return flowLock;
     }
 
     public boolean isTxStart() {

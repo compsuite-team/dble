@@ -247,11 +247,14 @@ public abstract class BackendService extends AbstractService {
 
 
     private void productReadingData(ServiceTask task) {
-        if (needCalcReadingData(task) != null) {
+        BusinessService businessService;
+        if ((businessService = needCalcReadingData(task)) != null) {
             int currentReadSize = readSize.addAndGet(((NormalServiceTask) task).getOrgData().length);
             if (currentReadSize > connection.getFlowHighLevel()) {
-                LOGGER.debug("This backend connection begins flow control, currentReadingSize= {},conn info:{}", currentReadSize, connection);
-                connection.disableRead();
+                synchronized (businessService.getFlowLock()) {
+                    LOGGER.debug("This backend connection begins flow control, currentReadingSize= {},conn info:{}", currentReadSize, connection);
+                    connection.disableRead();
+                }
             }
         }
     }
@@ -260,10 +263,14 @@ public abstract class BackendService extends AbstractService {
         BusinessService businessService;
         if ((businessService = needCalcReadingData(task)) != null) {
             int currentReadSize = readSize.addAndGet(-((NormalServiceTask) task).getOrgData().length);
-            if (currentReadSize <= connection.getFlowLowLevel() &&
-                    !businessService.isFlowControlled()) {
-                LOGGER.debug("This backend connection stop flow control, currentReadingSize= {},conn info:{}", currentReadSize, connection);
-                connection.enableRead();
+            if (currentReadSize > connection.getFlowLowLevel()) {
+                return;
+            }
+            synchronized (businessService.getFlowLock()) {
+                if (!businessService.isFlowControlled()) {
+                    LOGGER.debug("This backend connection stop flow control, currentReadingSize= {},conn info:{}", currentReadSize, connection);
+                    connection.enableRead();
+                }
             }
         }
     }

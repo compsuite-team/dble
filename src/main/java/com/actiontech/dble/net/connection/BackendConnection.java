@@ -229,6 +229,6 @@ public class BackendConnection extends PooledConnection {
 
     @Override
     public String toString() {
-        return "BackendConnection[id = " + id + " host = " + host + " port = " + port + " localPort = " + localPort + " mysqlId = " + threadId + " db config = " + instance;
+        return "BackendConnection[id = " + id + " host = " + host + " port = " + port + " localPort = " + localPort + " mysqlId = " + threadId + " db config = " + instance + "lastReadTime=" + lastReadTime;
     }
 }
